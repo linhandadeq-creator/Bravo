@@ -19,6 +19,16 @@ All stages are real, reproducible and covered by tests (345 tests, 87% coverage)
 Upstream steps not yet included: variant calling from reads, HLA typing and
 read-level RNA quantification (see `docs/roadmap.md`).
 
+## Download & install
+
+- **Windows (x64):** download `Bravo-Setup.exe` from
+  [Releases](https://github.com/linhandadeq-creator/Bravo/releases/latest).
+  No administrator rights are required; the Python and Node runtimes are
+  bundled and no system dependencies are needed. Optional external predictors
+  (PRIME, MixMHCpred, NetMHCpan) are not bundled and can be added later under
+  their own academic licenses.
+- **macOS / Linux:** run from source (see the quick-start section below).
+
 ## Stack
 
 | Layer      | Technology                                    |
