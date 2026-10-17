@@ -1,0 +1,93 @@
+name: release-windows
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend (standalone)
+        working-directory: frontend
+        shell: pwsh
+        run: |
+          npm ci
+          $env:NEXT_PUBLIC_API_URL = ""
+          npm run build
+
+      - name: Prepare micromamba
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://micro.mamba.pm/api/micromamba/win-64/latest" -OutFile micromamba.tar.bz2
+          tar -xjf micromamba.tar.bz2
+          Copy-Item "Library\bin\micromamba.exe" "packaging\windows\micromamba.exe"
+
+      - name: Create bundled runtime (conda pysam + pip deps)
+        shell: pwsh
+        run: |
+          $stage = "$PWD\packaging\windows\portable"
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          $env:MAMBA_ROOT_PREFIX = "$PWD\mamba"
+          .\packaging\windows\micromamba.exe create -y -p "$stage\runtime" -c conda-forge python=3.12 pysam
+          & "$stage\runtime\python.exe" -m pip install --upgrade pip
+          & "$stage\runtime\python.exe" -m pip install -r packaging\windows\requirements-win.txt
+
+      - name: Download portable Node
+        shell: pwsh
+        run: |
+          $stage = "$PWD\packaging\windows\portable"
+          $base = "https://nodejs.org/dist/latest-v20.x"
+          $index = Invoke-RestMethod "$base/"
+          $file = ($index | Where-Object { $_.name -like "node-v*-win-x64.zip" } | Select-Object -First 1).name
+          Invoke-WebRequest -Uri "$base/$file" -OutFile node.zip
+          Expand-Archive node.zip -DestinationPath node_tmp
+          Move-Item (Get-ChildItem node_tmp -Directory | Select-Object -First 1).FullName "$stage\node"
+
+      - name: Stage application files
+        shell: pwsh
+        run: |
+          $stage = "$PWD\packaging\windows\portable"
+          New-Item -ItemType Directory -Force -Path "$stage\backend", "$stage\frontend", "$stage\storage" | Out-Null
+          Copy-Item backend\app, backend\alembic, backend\scripts, backend\alembic.ini -Destination "$stage\backend" -Recurse -Force
+          Copy-Item frontend\.next\standalone\* -Destination "$stage\frontend" -Recurse -Force
+          New-Item -ItemType Directory -Force -Path "$stage\frontend\.next" | Out-Null
+          Copy-Item frontend\.next\static -Destination "$stage\frontend\.next\static" -Recurse -Force
+          if (Test-Path frontend\public) {
+            Copy-Item frontend\public -Destination "$stage\frontend\public" -Recurse -Force
+          }
+          Copy-Item packaging\windows\launcher.py, packaging\windows\Stop-Bravo.ps1, LICENSE, README.md -Destination $stage -Force
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          choco install nsis -y --no-progress
+          $stage = "$PWD\packaging\windows\portable"
+          Push-Location packaging\windows
+          & "C:\Program Files (x86)\NSIS\makensis.exe" "/DSTAGE=$stage" installer.nsi
+          Pop-Location
+          Get-Item packaging\windows\Bravo-Setup.exe | Format-List Name, Length
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Bravo-Setup-windows-x64
+          path: packaging/windows/Bravo-Setup.exe
+          if-no-files-found: error
+
+      - name: Publish release asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: packaging/windows/Bravo-Setup.exe
