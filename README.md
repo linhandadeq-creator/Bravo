@@ -490,3 +490,19 @@ background, black/dark-grey text, hairline borders, restrained accent color,
 ```bash
 cd backend && pytest
 ```
+
+## License
+
+The source code in this repository is released under the **MIT License**
+(see [`LICENSE`](LICENSE)).
+
+Two important notes:
+
+- **Research use only.** This platform is a scientific computing and
+  simulation tool. It is **not** for clinical or human use, and generates no
+  validated medical device or therapeutic.
+- **Third-party components.** The MIT license covers this repository's own
+  code. Optional external predictors are **not** bundled: PRIME and MixMHCpred
+  are free for academic, non-commercial use only (install them yourself under
+  their own terms). **ViennaRNA** is free for academic/non-profit use;
+  commercial use requires a separate license from the University of Vienna.
