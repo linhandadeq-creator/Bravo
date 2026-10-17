@@ -50,6 +50,7 @@ cp -R "$ROOT/frontend/.next/static" "$RES/app/frontend/.next/static"
 if [ -d "$ROOT/frontend/public" ]; then
   cp -R "$ROOT/frontend/public" "$RES/app/frontend/public"
 fi
+find "$RES/app" -name "__pycache__" -type d -prune -exec rm -rf {} + 2>/dev/null || true
 cp "$ROOT/packaging/macos/launcher.py" "$RES/launcher.py"
 cp "$ROOT/LICENSE" "$ROOT/README.md" "$RES/"
 
@@ -90,6 +91,8 @@ fi
 cat > "$APP/Contents/MacOS/Bravo" <<'LAUNCH'
 #!/bin/bash
 DIR="$(cd "$(dirname "$0")/../Resources" && pwd)"
+export PYTHONPATH="$DIR/site-packages${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONDONTWRITEBYTECODE=1
 exec "$DIR/runtime/bin/python3" "$DIR/launcher.py" >> "$HOME/Library/Logs/Bravo-launcher.log" 2>&1
 LAUNCH
 chmod +x "$APP/Contents/MacOS/Bravo"

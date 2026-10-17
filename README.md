@@ -22,13 +22,13 @@ read-level RNA quantification (see `docs/roadmap.md`).
 ## Download & install
 
 - **Windows (x64):** download `Bravo-Setup.exe` from
-  [Releases](https://github.com/linhandadeq-creator/Bravo/releases/latest).
+  [Releases](https://github.com/linhandadeq-creator/Bravo/releases).
   No administrator rights are required; the Python and Node runtimes are
   bundled and no system dependencies are needed. Optional external predictors
   (PRIME, MixMHCpred, NetMHCpan) are not bundled and can be added later under
   their own academic licenses.
 - **macOS (Apple Silicon):** download `Bravo-macOS-arm64.dmg` from
-  [Releases](https://github.com/linhandadeq-creator/Bravo/releases/latest),
+  [Releases](https://github.com/linhandadeq-creator/Bravo/releases),
   drag **Bravo** to Applications, then right-click → **Open** the first time
   (the app is ad-hoc signed but not notarized). Python and Node runtimes are
   bundled. Intel Macs and Linux: run from source.
