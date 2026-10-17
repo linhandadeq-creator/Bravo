@@ -1,6 +1,7 @@
 portable/
-micromamba.exe
-micromamba.tar.bz2
+build/
 node.zip
 node_tmp/
+python.zip
+get-pip.py
 Bravo-Setup.exe

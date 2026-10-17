@@ -15,7 +15,10 @@ import re
 import tempfile
 from dataclasses import dataclass, field
 
-import pysam
+try:  # optional dependency: Windows has no pysam wheels, a pure-Python fallback is used
+    import pysam  # type: ignore[import-not-found]
+except Exception:  # noqa: BLE001
+    pysam = None  # type: ignore[assignment]
 
 from app.core.chromosomes import normalize_chromosome
 
@@ -285,6 +288,136 @@ def _extract_record(record, line_number: int) -> ParsedVariant:
     )
 
 
+def _parse_info(raw: str) -> dict:
+    info: dict = {}
+    if not raw or raw == ".":
+        return info
+    for entry in raw.split(";"):
+        if not entry:
+            continue
+        if "=" in entry:
+            key, value = entry.split("=", 1)
+            parts = value.split(",")
+            info[key] = parts if len(parts) > 1 else parts[0]
+        else:
+            info[entry] = True
+    return info
+
+
+class _TextSample(dict):
+    """Minimal stand-in for a pysam sample mapping."""
+
+    phased = False
+
+
+def _parse_sample(keys: list[str], raw: str) -> _TextSample:
+    sample = _TextSample()
+    values = raw.split(":")
+    for index, key in enumerate(keys):
+        value = values[index] if index < len(values) else None
+        if value in (None, "", "."):
+            sample[key] = None
+            continue
+        if key == "GT":
+            sample.phased = "|" in value
+            sample[key] = tuple(
+                None if allele == "." else int(allele)
+                for allele in value.replace("|", "/").split("/")
+            )
+        elif key == "AD":
+            sample[key] = [int(part) if part.isdigit() else None for part in value.split(",")]
+        elif key == "DP":
+            sample[key] = _as_int(value)
+        elif key == "AF":
+            sample[key] = _as_float(value)
+        else:
+            parts = value.split(",")
+            sample[key] = parts if len(parts) > 1 else parts[0]
+    return sample
+
+
+class _TextRecord:
+    """Minimal stand-in for a pysam VariantRecord (used when pysam is absent)."""
+
+    def __init__(
+        self,
+        *,
+        chrom: str,
+        pos: int,
+        record_id: str | None,
+        ref: str,
+        alts: list[str] | None,
+        qual: float | None,
+        filters: list[str],
+        info: dict,
+        samples: dict,
+    ) -> None:
+        self.chrom = chrom
+        self.pos = pos
+        self.id = record_id
+        self.ref = ref
+        self.alts = alts
+        self.qual = qual
+        self.filter = filters
+        self.info = info
+        self.samples = samples
+
+
+def _read_text_records(path: str) -> list[_TextRecord]:
+    records: list[_TextRecord] = []
+    sample_names: list[str] = []
+    with open(path, "r", errors="replace") as handle:
+        for line in handle:
+            line = line.rstrip("\r\n")
+            if line.startswith("##"):
+                continue
+            if line.startswith("#CHROM"):
+                cols = line.split("\t")
+                if len(cols) > 9 and cols[8] == "FORMAT":
+                    sample_names = cols[9:]
+                continue
+            if not line or line.startswith("#"):
+                continue
+            cols = line.split("\t")
+            if len(cols) < 8:
+                continue
+            chrom, pos, record_id, ref, alt, qual, filt, info_raw = cols[:8]
+            format_raw = cols[8] if len(cols) > 8 else ""
+            sample_cols = cols[9:] if len(cols) > 9 else []
+            info = _parse_info(info_raw)
+            alts = None if alt in ("", ".") else alt.split(",")
+            samples: dict = {}
+            if format_raw and sample_names:
+                keys = format_raw.split(":")
+                for name, raw in zip(sample_names, sample_cols):
+                    samples[name] = _parse_sample(keys, raw)
+            try:
+                position = int(pos)
+            except ValueError:
+                continue
+            records.append(
+                _TextRecord(
+                    chrom=chrom,
+                    pos=position,
+                    record_id=None if record_id in ("", ".") else record_id,
+                    ref=ref,
+                    alts=alts,
+                    qual=_as_float(qual),
+                    filters=[] if filt in ("", ".") else filt.split(";"),
+                    info=info,
+                    samples=samples,
+                )
+            )
+    return records
+
+
+def _read_records(path: str) -> list:
+    if pysam is not None:
+        with pysam.VariantFile(path) as vcf:
+            return list(vcf)
+    return _read_text_records(path)
+
+
 def parse_vcf(path: str, role: str = "TUMOR") -> ParseResult:
     result = ParseResult(role=role)
 
@@ -392,9 +525,8 @@ def parse_vcf(path: str, role: str = "TUMOR") -> ParseResult:
                 handle.write("\t".join(cols) + "\n")
 
         try:
-            with pysam.VariantFile(clean_path) as vcf:
-                records = list(vcf)
-        except Exception as exc:  # noqa: BLE001 - pysam could not parse the file
+            records = _read_records(clean_path)
+        except Exception as exc:  # noqa: BLE001 - parser could not read the file
             result.format_ok = False
             result.errors.append(f"{role} VCF could not be parsed: {exc}")
             _mark_duplicates(result)

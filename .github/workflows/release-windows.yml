@@ -28,27 +28,31 @@ jobs:
           $env:NEXT_PUBLIC_API_URL = ""
           npm run build
 
-      - name: Prepare micromamba
+      - name: Download embeddable Python
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://micro.mamba.pm/api/micromamba/win-64/latest" -OutFile micromamba.tar.bz2
-          tar -xjf micromamba.tar.bz2
-          Copy-Item "Library\bin\micromamba.exe" "packaging\windows\micromamba.exe"
+          $py = "packaging\windows\build\python"
+          New-Item -ItemType Directory -Force -Path $py | Out-Null
+          Invoke-WebRequest -Uri "https://www.python.org/ftp/python/3.12.8/python-3.12.8-embed-amd64.zip" -OutFile python.zip
+          Expand-Archive python.zip -DestinationPath $py
+          $pth = Get-ChildItem $py -Filter "python*._pth" | Select-Object -First 1
+          (Get-Content $pth.FullName) -replace '^#import site$', 'import site' | Set-Content $pth.FullName
+          Add-Content $pth.FullName 'Lib\site-packages'
+          New-Item -ItemType Directory -Force -Path "$py\Lib\site-packages" | Out-Null
 
-      - name: Create bundled runtime (conda pysam + pip deps)
+      - name: Install Python dependencies into bundled runtime
         shell: pwsh
         run: |
-          $stage = "$PWD\packaging\windows\portable"
-          New-Item -ItemType Directory -Force -Path $stage | Out-Null
-          $env:MAMBA_ROOT_PREFIX = "$PWD\mamba"
-          .\packaging\windows\micromamba.exe create -y -p "$stage\runtime" -c conda-forge python=3.12 pysam
-          & "$stage\runtime\python.exe" -m pip install --upgrade pip
-          & "$stage\runtime\python.exe" -m pip install -r packaging\windows\requirements-win.txt
+          $py = "packaging\windows\build\python"
+          Invoke-WebRequest -Uri "https://bootstrap.pypa.io/get-pip.py" -OutFile get-pip.py
+          & "$py\python.exe" get-pip.py --no-warn-script-location
+          & "$py\python.exe" -m pip install --no-warn-script-location -r packaging\windows\requirements-win.txt
 
       - name: Download portable Node
         shell: pwsh
         run: |
           $stage = "$PWD\packaging\windows\portable"
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
           $base = "https://nodejs.org/dist/latest-v20.x"
           $index = Invoke-RestMethod "$base/"
           $file = ($index | Where-Object { $_.name -like "node-v*-win-x64.zip" } | Select-Object -First 1).name
@@ -60,6 +64,7 @@ jobs:
         shell: pwsh
         run: |
           $stage = "$PWD\packaging\windows\portable"
+          Move-Item "packaging\windows\build\python" "$stage\runtime"
           New-Item -ItemType Directory -Force -Path "$stage\backend", "$stage\frontend", "$stage\storage" | Out-Null
           Copy-Item backend\app, backend\alembic, backend\scripts, backend\alembic.ini -Destination "$stage\backend" -Recurse -Force
           Copy-Item frontend\.next\standalone\* -Destination "$stage\frontend" -Recurse -Force
