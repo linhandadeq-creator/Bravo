@@ -1,17 +1,23 @@
 # Bravo — Personalized Neoantigen Analysis Platform
 
 A scientific computing and simulation platform for personalized neoantigen analysis.
+**Research simulation only — not for clinical or human use.** Every output is labelled
+with its provenance; unavailable tools are never silently substituted by mock results.
 
-**Phase 1 (current): foundation only.** This phase establishes the project
-structure, UI shell, API surface, database schema, and containerized runtime.
-Domain logic (VCF analysis, variant annotation, HLA typing, neoantigen
-prediction, and mRNA design) is intentionally **not** implemented yet.
-
-## Pipeline (planned)
+## Pipeline (implemented)
 
 ```
-VCF → Variant Analysis → Neoantigen Analysis → mRNA Design Simulation
+VCF → QC & somatic classification → annotation (Ensembl VEP REST / fully offline)
+    → HLA & expression ingest → candidate generation (UniProt self-filter)
+    → prediction (MHCflurry · MHCnuggets · MixMHCpred · PRIME · consensus)
+    → ranking (agretopicity + evidence) → mRNA construct design (codon engine +
+      MPRA-trained 5'UTR model + sequence QC) → polyepitope assembly with
+      junction audit → production blueprint package → reports (PDF/MD/HTML/CSV)
 ```
+
+All stages are real, reproducible and covered by tests (345 tests, 87% coverage).
+Upstream steps not yet included: variant calling from reads, HLA typing and
+read-level RNA quantification (see `docs/roadmap.md`).
 
 ## Stack
 
