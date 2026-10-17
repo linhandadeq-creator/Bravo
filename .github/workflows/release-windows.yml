@@ -53,10 +53,9 @@ jobs:
         run: |
           $stage = "$PWD\packaging\windows\portable"
           New-Item -ItemType Directory -Force -Path $stage | Out-Null
-          $base = "https://nodejs.org/dist/latest-v20.x"
-          $index = Invoke-RestMethod "$base/"
-          $file = ($index | Where-Object { $_.name -like "node-v*-win-x64.zip" } | Select-Object -First 1).name
-          Invoke-WebRequest -Uri "$base/$file" -OutFile node.zip
+          $version = "v20.18.1"
+          $file = "node-$version-win-x64.zip"
+          Invoke-WebRequest -Uri "https://nodejs.org/dist/$version/$file" -OutFile node.zip
           Expand-Archive node.zip -DestinationPath node_tmp
           Move-Item (Get-ChildItem node_tmp -Directory | Select-Object -First 1).FullName "$stage\node"
 
