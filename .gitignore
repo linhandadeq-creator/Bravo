@@ -39,3 +39,6 @@ backend/tools/
 
 # 本地运行日志/进程
 .run/
+
+# TypeScript build info
+*.tsbuildinfo
