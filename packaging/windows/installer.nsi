@@ -15,9 +15,6 @@ SetCompressor /SOLID lzma
 SetCompressorDictSize 64
 
 !define MUI_ABORTWARNING
-!define MUI_FINISHPAGE_RUN "$INSTDIR\runtime\pythonw.exe"
-!define MUI_FINISHPAGE_RUN_PARAMETERS '"$INSTDIR\launcher.py"'
-!define MUI_FINISHPAGE_RUN_TEXT "Launch Bravo"
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
