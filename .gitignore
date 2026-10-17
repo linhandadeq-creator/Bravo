@@ -1,0 +1,41 @@
+# Environment
+.env
+.env.local
+*.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite3
+.coverage
+htmlcov/
+
+# Node
+node_modules/
+.next/
+out/
+
+# Docker
+postgres_data/
+
+# Uploaded / generated VCF storage
+backend/storage/
+
+# 第三方学术工具(许可受限,不随仓库分发;用 download_*.sh 自行获取)
+backend/external/
+backend/tools/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# 本地运行日志/进程
+.run/

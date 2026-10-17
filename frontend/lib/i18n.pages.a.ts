@@ -1,0 +1,51 @@
+export const extraZh: Record<string, string> = {
+  "run.loadFailed": "加载分析运行失败",
+  "run.somaticN": "体细胞候选 ({n})",
+  "run.classification": "分类",
+  "run.col.tumorAfDepth": "肿瘤等位基因频率 / 深度",
+  "run.col.normalAfDepth": "正常等位基因频率 / 深度",
+  "run.col.genotypeTn": "基因型 (肿瘤 / 正常)",
+  "run.variantsN": "变异 ({n})",
+
+  "vd.loadFailed": "加载变异失败",
+  "vd.run": "运行",
+  "vd.noEvidence": "此位点暂无{title}。",
+  "vd.invalid": "无效",
+  "vd.hgvsC": "HGVS (c.)",
+  "vd.hgvsP": "HGVS (p.)",
+  "vd.known": "已知变异",
+  "vd.clinSig": "临床意义",
+  "vd.peptide": "突变肽",
+
+  "hla.populationCoverage": "人群 HLA 覆盖率（近似）",
+  "gen.productionPackage": "生产图纸包",
+  "gen.worklistCsv": "实验工作单 CSV",
+  "gen.seqQc": "序列 QC",
+  "gen.manufacturability": "可制造性评分 {n}",
+};
+
+export const extraEn: Record<string, string> = {
+  "run.loadFailed": "Failed to load analysis run",
+  "run.somaticN": "Somatic candidates ({n})",
+  "run.classification": "Classification",
+  "run.col.tumorAfDepth": "Tumour AF / DP",
+  "run.col.normalAfDepth": "Normal AF / DP",
+  "run.col.genotypeTn": "Genotype (tumour / normal)",
+  "run.variantsN": "Variants ({n})",
+
+  "vd.loadFailed": "Failed to load variant",
+  "vd.run": "Run",
+  "vd.noEvidence": "No {title} at this locus.",
+  "vd.invalid": "invalid",
+  "vd.hgvsC": "HGVS (c.)",
+  "vd.hgvsP": "HGVS (p.)",
+  "vd.known": "Known variants",
+  "vd.clinSig": "Clinical significance",
+  "vd.peptide": "Mutated peptide",
+
+  "hla.populationCoverage": "Population HLA coverage (approx.)",
+  "gen.productionPackage": "Production package",
+  "gen.worklistCsv": "Lab worklist CSV",
+  "gen.seqQc": "Sequence QC",
+  "gen.manufacturability": "Manufacturability score {n}",
+};
