@@ -27,7 +27,11 @@ read-level RNA quantification (see `docs/roadmap.md`).
   bundled and no system dependencies are needed. Optional external predictors
   (PRIME, MixMHCpred, NetMHCpan) are not bundled and can be added later under
   their own academic licenses.
-- **macOS / Linux:** run from source (see the quick-start section below).
+- **macOS (Apple Silicon):** download `Bravo-macOS-arm64.dmg` from
+  [Releases](https://github.com/linhandadeq-creator/Bravo/releases/latest),
+  drag **Bravo** to Applications, then right-click → **Open** the first time
+  (the app is ad-hoc signed but not notarized). Python and Node runtimes are
+  bundled. Intel Macs and Linux: run from source.
 
 ## Stack
 
